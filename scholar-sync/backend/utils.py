@@ -5,13 +5,8 @@ import os
 from gensim.models import KeyedVectors
 
 # Load the Word2Vec model
-model = None
-try:
-    path = os.path.join("model", "word2vec-google-news-300.gz")
-    model = KeyedVectors.load_word2vec_format(path, binary=True)
-except:
-    print("model file is not present")
-    sys.exit()
+path = os.path.join(os.getcwd(), "model", "word2vec-google-news-300.gz")
+model = KeyedVectors.load_word2vec_format(path, binary=True)
 
 # Load the common words library
 common_words = []
