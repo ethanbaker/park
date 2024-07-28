@@ -1,0 +1,67 @@
+{
+  "hash": "ba406824",
+  "configHash": "8e936328",
+  "lockfileHash": "2d71094f",
+  "browserHash": "44e80f9c",
+  "optimized": {
+    "@angular/common": {
+      "src": "../../../../../node_modules/@angular/common/fesm2022/common.mjs",
+      "file": "@angular_common.js",
+      "fileHash": "58e371f2",
+      "needsInterop": false
+    },
+    "@angular/common/http": {
+      "src": "../../../../../node_modules/@angular/common/fesm2022/http.mjs",
+      "file": "@angular_common_http.js",
+      "fileHash": "c9d25c58",
+      "needsInterop": false
+    },
+    "@angular/core": {
+      "src": "../../../../../node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "629a678d",
+      "needsInterop": false
+    },
+    "@angular/forms": {
+      "src": "../../../../../node_modules/@angular/forms/fesm2022/forms.mjs",
+      "file": "@angular_forms.js",
+      "fileHash": "c7b7a178",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "32209ab8",
+      "needsInterop": false
+    },
+    "@angular/platform-browser/animations/async": {
+      "src": "../../../../../node_modules/@angular/platform-browser/fesm2022/animations/async.mjs",
+      "file": "@angular_platform-browser_animations_async.js",
+      "fileHash": "f5123ed4",
+      "needsInterop": false
+    },
+    "ngx-papaparse": {
+      "src": "../../../../../node_modules/ngx-papaparse/fesm2022/ngx-papaparse.mjs",
+      "file": "ngx-papaparse.js",
+      "fileHash": "ac7a9674",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-LP5EXNXQ": {
+      "file": "chunk-LP5EXNXQ.js"
+    },
+    "chunk-3TCND7BC": {
+      "file": "chunk-3TCND7BC.js"
+    },
+    "browser-7OQEPR2I": {
+      "file": "browser-7OQEPR2I.js"
+    },
+    "chunk-SK6D2EQ3": {
+      "file": "chunk-SK6D2EQ3.js"
+    },
+    "chunk-KKR6ZSBB": {
+      "file": "chunk-KKR6ZSBB.js"
+    }
+  }
+}
