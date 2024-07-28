@@ -47,7 +47,7 @@ jobs:
       - name: Populate dist
         working-directory: .
         run: |
-          mv ./scholar-sync/frontend/dist/frontend ./dist/sync
+          mv ./scholar-sync/frontend/dist/frontend/browser ./dist/sync
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
