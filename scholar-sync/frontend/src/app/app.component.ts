@@ -66,7 +66,8 @@ export class AppComponent {
   }
 
   sendDataToApi(data: any[]) {
-    const apiUrl = 'https://park.api.ethanbaker.dev/api/v1/pairs';
+    //const apiUrl = 'https://park.api.ethanbaker.dev/api/v1/pairs';
+    const apiUrl = 'http://localhost:8000/api/v1/pairs';
 
     this.http.post(apiUrl, data).subscribe({
       next: (response) => {

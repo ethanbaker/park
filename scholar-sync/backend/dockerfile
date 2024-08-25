@@ -2,10 +2,11 @@ FROM python:3.10
 
 WORKDIR /src
 
-COPY ./requirements.txt /src/requirements.txt
+COPY . /src/
 
-RUN pip install --no-cache-dir --upgrade -r /src/requirements.txt
+RUN pip install --no-cache-dir -r /src/requirements.txt
 
-COPY ./app /src/app
+CMD ["fastapi", "run", "api.py", "--port", "80", "--proxy-headers"]
 
-CMD ["fastapi", "run", "app/main.py", "--port", "80", "--proxy-headers"]
+# docker build --tag park-sync-backend .
+# docker run -d --name park-sync-backend --publish 5004:80 park-sync-backend

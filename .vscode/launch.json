@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Scholar Sync Backend",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/home/ethanbaker/.local/bin/fastapi",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "dev",
+        "${workspaceFolder}/scholar-sync/backend/api.py",
+        "--host",
+        "127.0.0.1",
+        "--proxy-headers"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/scholar-sync/backend/"
+      },
+    }
+  ]
+}

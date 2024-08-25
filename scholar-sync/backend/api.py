@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from k_means_constrained import KMeansConstrained
-from student import Student
+
+from student import StudentModel, Student
+from kmeans import KMeansVariation
 
 origins = [
-    "https://park.api.ethanbaker.dev",
+    "https://park.ethanbaker.dev",
     "http://localhost:4200",
 ]
 
@@ -20,23 +21,27 @@ app.add_middleware(
 )
 
 @app.post(base_path + "pairs")
-def create_pairs(students: list[Student]):
-    # Number of clusters
-    n = len(students) // 2
+def create_pairs(models: list[StudentModel]):
+    # Turn StudentModels into Students
+    students = []
+    centers = []
+    for m in models:
+        student = Student(model=m)
+        students.append(student)
 
-    # Run k clusters
-    km = KMeansConstrained(
-        n_clusters=n,
-        size_min=2,
-        size_max=2,
-        random_state=0,
-    )
-    cluster_assignments = km.fit_predict([student.to_vector() for student in students])
+        if m.role == "mentor":
+            centers.append(student)
 
-    # Group vectors into clusters
-    clusters = [[] for _ in range(n)]
-    for i, cluster_id in enumerate(cluster_assignments):
-        clusters[cluster_id].append(students[i].name)
+    # Run kmeans on the list of students
+    k = len(students) // 2
+    kmeans = KMeansVariation(k=k)
+    kmeans.initialize_centers(students, centers=centers, method="provide")
+    clusters = kmeans.fit(students)
+
+    # Group students' names into pairs using the clusters
+    pairs = []
+    for i, cluster in enumerate(clusters):
+        pairs.append([student.name for student in cluster])
 
     # Now clusters contains the grouped vectors
-    return {"pairs": clusters}
+    return {"pairs": pairs}
