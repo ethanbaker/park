@@ -1,41 +1,91 @@
 import utils
-from parameters import weights, methods
+from parameters import weights, weights_sum, methods
 from pydantic import BaseModel
 from kmeans import KMeansVariation
+from enums import *
 
 # StudentModel is used to receive JSON input for an API
 class StudentModel(BaseModel):
-    role: str
+    # Identifying fields
     name: str
-    biography: str
-    hobbies: str
+    email: str
+
+    # Mentor/Mentee status
+    role: str
+    mentee_limit: int | None = None
+
+    # Personal fields
     class_year: int
+    major: str = ""
+    minor: str = ""
+    high_school: HighSchoolEnum | None
+    lead_conversation: LeadConversationEnum | None = LeadConversationEnum.Neutral
+    academic_goals: str = ""
+    professional_goals: str = ""
+    frequency: FrequencyEnum | None
+    involved_off_campus: str = ""
+    involved_on_campus: str = ""
+    curious: str = ""
+    background: str = ""
+    gender: str = ""
+    description: str = ""
+    identities: str = ""
+
 
 # Student class contains complicated behavior for kmeans analysis
 class Student():
-    def __init__(self, model=None, vectors=None):
+    def __init__(self, model: StudentModel|None = None, vectors=None):
         """
         Convert this student representation to an n-dimensional vector when first initialized
 
         :param model: The student model this student is based from
         """
-        # If no model is provided and vectors were, use those instead
+        # If no model is provided and vectors were, use those instead (for 'cluster average' students)
         if model == None and vectors != None:
             self.vectors = vectors
             return
 
+        # Set static fields that aren't used for comparisons
         self.name = model.name
+        self.email = model.email
+
+        self.role = model.role
+        self.mentee_limit = model.mentee_limit
 
         # Convert raw fields to vectors
-        biography_vector = utils.string_to_vector(model.biography)
-        hobbies_vector = utils.string_to_vector(model.hobbies)
         class_year_vector = utils.num_to_vector(model.class_year)
+        major_vector = utils.string_to_vector(model.major)
+        minor_vector = utils.string_to_vector(model.minor)
+        high_school_vector = utils.enum_to_vector(model.high_school)
+        lead_conversation_vector = utils.enum_to_vector(model.lead_conversation)
+        academic_goals_vector = utils.string_to_vector(model.academic_goals)
+        professional_goals_vector = utils.string_to_vector(model.professional_goals)
+        frequency_vector = utils.enum_to_vector(model.frequency)
+        involved_off_campus_vector = utils.string_to_vector(model.involved_off_campus)
+        involved_on_campus_vector = utils.string_to_vector(model.involved_on_campus)
+        curious_vector = utils.string_to_vector(model.curious)
+        background_vector = utils.string_to_vector(model.background)
+        gender_vector = utils.string_to_vector(model.gender)
+        description_vector = utils.string_to_vector(model.description)
+        identities_vector = utils.string_to_vector(model.identities)
 
         # Create a dict holding all vectors
         self.vectors = {
-            "biography": biography_vector,
-            "hobbies": hobbies_vector,
             "class_year": class_year_vector,
+            "major": major_vector,
+            "minor": minor_vector,
+            "high_school": high_school_vector,
+            "lead_conversation": lead_conversation_vector,
+            "academic_goals": academic_goals_vector,
+            "professional_goals": professional_goals_vector,
+            "frequency": frequency_vector,
+            "involved_off_campus": involved_off_campus_vector,
+            "involved_on_campus": involved_on_campus_vector,
+            "curious": curious_vector,
+            "background": background_vector,
+            "gender": gender_vector,
+            "description": description_vector,
+            "identities": identities_vector,
         }
 
     def compare_to(self, s) -> float:
@@ -49,8 +99,12 @@ class Student():
         b = s.to_vectors()
 
         # Calculate differences in vectors and return their sum
-        diffs = [weights[key] * methods[key](a[key], b[key]) for key in a]
-        return sum(diffs) 
+        diffs = []
+        for key in a:
+            if len(a[key]) > 0 and len(b[key]) > 0:
+                diffs.append(weights[key] * methods[key](a[key], b[key]))
+
+        return sum(diffs) / weights_sum
 
     def average_with(self, students):
         """
@@ -66,14 +120,15 @@ class Student():
             vector = student.to_vectors()
             for key in vector:
                 for i in range(len(sum[key])):
-                    sum[key][i] += vector[key][i]
+                    if vector[key][i] != None and len(sum[key][i]) > 0: # ????
+                        sum[key][i] += vector[key][i]
 
         # Divide each key by length for the average
         for key in sum:
             sum[key] = [v / (len(students) + 1) for v in sum[key]]
 
         return Student(vectors=sum)
-
+    
     def to_vectors(self):
         """
         Return the vector representation of this student
@@ -105,17 +160,38 @@ if __name__ == "__main__":
 
     # Collect student objects
     students = []
-    centers = []
+    mentors = []
     for d in data:
         name, role, biography, hobbies, class_year = d
 
-        model = StudentModel(name=name, biography=biography, hobbies=hobbies, class_year=class_year, role=role)
+        model = StudentModel(
+            name=name,
+            role=role,
+            description=biography,
+            curious=hobbies,
+            class_year=class_year,
+            # Not used
+            email="",
+            mentee_limit=None,
+            major="",
+            minor="",
+            high_school=0,
+            lead_conversation=0,
+            academic_goals="",
+            professional_goals="",
+            frequency=0,
+            involved_off_campus="",
+            involved_on_campus="",
+            gender="",
+            identities="",
+        )
 
         student = Student(model)
-        students.append(student)
 
         if role == "mentor":
-            centers.append(student)
+            mentors.append(student)
+        else:
+            students.append(student)
 
     for a in students:
         for b in students:
@@ -123,13 +199,12 @@ if __name__ == "__main__":
                 print(a.name + " comparing to " + b.name + " = ", a.compare_to(b))
 
     # Perform kmeans
-    kmeans = KMeansVariation(k=len(students)//2)
-    kmeans.initialize_centers(students, centers=centers, method="provide")
+    kmeans = KMeansVariation(k=len(mentors), clusters=mentors)
     clusters = kmeans.fit(students)
 
     # Print out results
     for i, cluster in enumerate(clusters):
-        print(f"Cluster {i} contains {len(cluster)} objects.")
+        #print(f"Cluster {i} contains {len(cluster)} objects.")
         for vector in cluster:
             print(vector.name, end=" ")
         print()

@@ -23,20 +23,20 @@ app.add_middleware(
 @app.post(base_path + "pairs")
 def create_pairs(models: list[StudentModel]):
     # Turn StudentModels into Students
-    students = []
-    centers = []
+    mentors = []
+    mentees = []
     for m in models:
         student = Student(model=m)
-        students.append(student)
 
         if m.role == "mentor":
-            centers.append(student)
+            mentors.append(student)
+        else:
+            mentees.append(student)
 
     # Run kmeans on the list of students
-    k = len(students) // 2
-    kmeans = KMeansVariation(k=k)
-    kmeans.initialize_centers(students, centers=centers, method="provide")
-    clusters = kmeans.fit(students)
+    k = len(mentors)
+    kmeans = KMeansVariation(k=k, clusters=mentors, max_iter=100)
+    clusters = kmeans.fit(mentees)
 
     # Group students' names into pairs using the clusters
     pairs = []

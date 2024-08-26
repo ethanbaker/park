@@ -5,15 +5,6 @@ import math
 
 # Object is a wrapper class used in k-means operations
 class Object:
-    # The Object's distance to its nearest center, used for heap removal
-    nearest_distance = None
-
-    # The index of the nearest center point compared to this object
-    nearest_center_index = None
-
-    # Center points that this object cannot belong to (as they are already full)
-    removed_centers = []
-
     def __init__(self, value):
         """
         Initialize an object with an encapsulated value
@@ -22,6 +13,15 @@ class Object:
         - This value must contain a `average_with` method which returns an average variable of type `value` of the two provided values
         """
         self.value = value
+
+        # The Object's distance to its nearest center, used for heap removal
+        self.nearest_distance = None
+
+        # The index of the nearest center point compared to this object
+        self.nearest_center_index = None
+
+        # Center points that this object cannot belong to (as they are already full)
+        self.removed_centers = []
 
     def compare_to(self, obj) -> float:
         """
@@ -83,7 +83,7 @@ class Heap:
 # KMeansVariation class handles performing k-means clustering with clusters of constant sizes and
 # customly defined "distance" functions
 class KMeansVariation:
-    def __init__(self, k: int, max_iter: int = 100):
+    def __init__(self, k: int, max_iter: int = 100, clusters:List[List[Object]]|None = None):
         """
         Initialize the KMeansVariation
 
@@ -94,32 +94,14 @@ class KMeansVariation:
         self.max_iter = max_iter
 
         self.centers = []
-        self.clusters = [[] for _ in range(k)]
 
-    def initialize_centers(self, data: List[Object], centers=None, method="kmeans++") -> None:
-        """
-        Initialize the centers of the kmeans search by using k-means++ or by providing objects directly
-
-        :param data: data to analyze
-        :param centers: centers to provide already
-        :param method: what method to use to calculate centers
-        """
-        # Convert the data into objects so we can attach attributes to them
-        objects = [Object(item) for item in data]
-
-        if method == "kmeans++":
-            # Add the first center randomly from our list of data
-            self.centers = [objects[np.random.randint(len(objects))]]
-        elif method == "provide":
-            # Provide centers directly
-            self.centers = [Object(item) for item in centers]
-
-        # Keep adding clusters until we have k clusters. Clusters are added probabalistically such that 
-        # clusters further from other centers are more likely to be clusters
-        for _ in range(len(self.centers), self.k):
-            distances = [min(obj.compare_to(c) for c in self.centers) for obj in objects]
-            probs = [d / sum(distances) for d in distances]
-            self.centers.append(np.random.choice(objects, p=probs))
+        if clusters == None:
+            self.clusters = [[] for _ in range(k)]
+        else:
+            self.cluster_size = len(clusters)
+            self.clusters = [[Object(item)] for item in clusters]
+            while len(self.clusters) < k:
+                self.clusters.append([])
 
     def fit(self, data: List[any]) -> List[any]:
         """
@@ -131,7 +113,10 @@ class KMeansVariation:
         # Convert the data into objects so we can attach attributes to them
         objects = [Object(item) for item in data]
 
+        self.cluster_size = (self.cluster_size + len(objects)) / self.k
+
         # For our set number of iterations, assign clusters and optimize
+        self._initialize_centers(objects)
         for _ in range(self.max_iter):
             self._assign_clusters(objects)
             self._update_centers()
@@ -144,6 +129,24 @@ class KMeansVariation:
             results.append([obj.value for obj in cluster])
 
         return results
+
+    def _initialize_centers(self, objects: List[Object]) -> None:
+        """
+        Initialize the centers of the kmeans search by using k-means++ or by providing objects directly
+
+        :param data: data to analyze
+        :param centers: centers to provide already
+        :param method: what method to use to calculate centers
+        """
+        # Add the first center randomly from our list of data
+        self.centers = [objects[np.random.randint(len(objects))]]
+
+        # Keep adding clusters until we have k clusters. Clusters are added probabalistically such that 
+        # clusters further from other centers are more likely to be clusters
+        for _ in range(len(self.centers), self.k):
+            distances = [min((1 - obj.compare_to(c))/2 for c in self.centers) for obj in objects]
+            probs = [d / sum(distances) for d in distances]
+            self.centers.append(np.random.choice(objects, p=probs))
 
     def _assign_clusters(self, objects: List[Object]) -> None:
         """
@@ -163,8 +166,8 @@ class KMeansVariation:
 
             heap.append(obj)
 
-        cluster_sizes = [0] * self.k
-        temp_clusters = [[] for _ in range(self.k)]
+        cluster_sizes = [len(cluster) for cluster in self.clusters]
+        temp_clusters = [self.clusters[i] for i in range(self.k)]
 
         # While the heap is not empty
         while not heap.isEmpty():
@@ -172,7 +175,7 @@ class KMeansVariation:
             obj = heap.pop()
             nearest_index = obj.nearest_center_index
 
-            if cluster_sizes[nearest_index] < len(objects) // self.k:
+            if cluster_sizes[nearest_index] < self.cluster_size:
                 # If the cluster this object wants to be in has room, add it
                 temp_clusters[nearest_index].append(obj)
                 cluster_sizes[nearest_index] += 1
@@ -181,15 +184,15 @@ class KMeansVariation:
                 obj.removed_centers.append(nearest_index)
                 second_nearest_index = np.argmin([math.inf if i in obj.removed_centers else obj.compare_to(self.centers[i]) for i in range(len(self.centers))])
 
-                if cluster_sizes[second_nearest_index] < len(objects) // self.k:
+                # The second nearest cluster has no room, so update the object's inner score and index and add it back to the heap
+                obj.nearest_distance = distances[second_nearest_index]
+                obj.nearest_center_index = second_nearest_index
+
+                if cluster_sizes[second_nearest_index] < self.cluster_size:
                     # If the second nearest cluster has room, add the object
                     temp_clusters[second_nearest_index].append(obj)
                     cluster_sizes[second_nearest_index] += 1
                 else:
-                    # The second nearest cluster has no room, so update the object's inner score and index and add it back to the heap
-                    obj.nearest_distance = distances[second_nearest_index]
-                    obj.nearest_center_index = second_nearest_index
-
                     heap.append(obj)
 
         # Update the k-means clusters

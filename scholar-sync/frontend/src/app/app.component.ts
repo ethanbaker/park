@@ -57,7 +57,33 @@ export class AppComponent {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        this.sendDataToApi(results.data);
+        this.sendDataToApi(results.data.map((entry: any) => {
+          let highSchoolIndex = ["In-State", "Out-of-state"].indexOf(entry.high_school);
+          let leadConversationIndex = ["Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree"].indexOf(entry.lead_conversation);
+          let frequencyIndex = ["low", "medium", "high"].indexOf(entry.frequency);
+
+          return {
+            name: entry.name,
+            email: entry.email,
+            role: entry.role,
+            mentee_limit: entry.mentee_limit === "null" ? null : Number(entry.mentee_limit),
+            class_year: entry.class_year,
+            major: entry.major,
+            minor: entry.minor,
+            high_school: highSchoolIndex > -1 ? highSchoolIndex : null,
+            lead_conversation: leadConversationIndex > -1 ? leadConversationIndex : null,
+            academic_goals: entry.academic_goals,
+            professional_goals: entry.professional_goals,
+            frequency: frequencyIndex > -1 ? frequencyIndex : null,
+            involved_off_campus: entry.involved_off_campus,
+            involved_on_campus: entry.involved_on_campus,
+            curious: entry.curious,
+            background: entry.background,
+            gender: entry.gender,
+            description: entry.description,
+            identities: entry.identities,
+          };
+        }));
       },
       error: (error) => {
         console.error('CSV parsing error:', error);
@@ -68,6 +94,8 @@ export class AppComponent {
   sendDataToApi(data: any[]) {
     //const apiUrl = 'https://park.api.ethanbaker.dev/api/v1/pairs';
     const apiUrl = 'http://localhost:8000/api/v1/pairs';
+
+    console.log(data)
 
     this.http.post(apiUrl, data).subscribe({
       next: (response) => {
