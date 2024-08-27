@@ -27,9 +27,11 @@ class Object:
         """
         Compare this object to another object by referencing the encapsulated value
 
+        The encapsulated value returns a score from [-1, 1]. This method returns a distance between [0, 1]
+
         :param obj: The object to compare this object to
         """
-        return self.value.compare_to(obj.value)
+        return (1 - self.value.compare_to(obj.value))/2.0
 
     def average_with(self, objects):
         """
@@ -144,7 +146,7 @@ class KMeansVariation:
         # Keep adding clusters until we have k clusters. Clusters are added probabalistically such that 
         # clusters further from other centers are more likely to be clusters
         for _ in range(len(self.centers), self.k):
-            distances = [min((1 - obj.compare_to(c))/2 for c in self.centers) for obj in objects]
+            distances = [min(obj.compare_to(c) for c in self.centers) for obj in objects]
             probs = [d / sum(distances) for d in distances]
             self.centers.append(np.random.choice(objects, p=probs))
 

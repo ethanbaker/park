@@ -120,7 +120,7 @@ class Student():
             vector = student.to_vectors()
             for key in vector:
                 for i in range(len(sum[key])):
-                    if vector[key][i] != None and len(sum[key][i]) > 0: # ????
+                    if len(vector[key]) > 0 and vector[key][i] != None:
                         sum[key][i] += vector[key][i]
 
         # Divide each key by length for the average
